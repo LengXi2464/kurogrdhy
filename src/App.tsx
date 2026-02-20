@@ -70,14 +70,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import SearchIcon from '@mui/icons-material/Search';
 
-// 根据环境选择使用真实API还是模拟API
-const isDevEnvironment = import.meta.env.DEV;
-const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
-
-const api =
-  isDevEnvironment && !useRealApi
-    ? new MockNavigationClient()
-    : new NavigationClient(isDevEnvironment ? 'http://localhost:8788/api' : '/api');
+// 总是使用模拟API，因为这是静态部署
+const api = new MockNavigationClient();
 
 // 排序模式枚举
 enum SortMode {
