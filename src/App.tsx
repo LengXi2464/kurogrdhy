@@ -1190,7 +1190,6 @@ function App() {
                       </>
                     )}
                   </Menu>
-                  </>
                 )}
                 <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
               </Stack>
