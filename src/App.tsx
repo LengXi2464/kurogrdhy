@@ -205,7 +205,6 @@ function App() {
   
   // 新增搜索和左侧列表状态
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
   // 菜单打开关闭
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
