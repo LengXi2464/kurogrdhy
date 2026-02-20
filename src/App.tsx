@@ -52,11 +52,15 @@ import {
   Snackbar,
   InputAdornment,
   Slider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText as MuiListItemText,
+  Drawer,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import GitHubIcon from '@mui/icons-material/GitHub';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -65,6 +69,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import SearchIcon from '@mui/icons-material/Search';
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -205,6 +210,11 @@ function App() {
   // 导入结果提示框状态
   const [importResultOpen, setImportResultOpen] = useState(false);
   const [importResultMessage, setImportResultMessage] = useState('');
+  
+  // 新增搜索和左侧列表状态
+  const [searchTerm, setSearchTerm] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
   // 菜单打开关闭
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -222,40 +232,29 @@ function App() {
       console.log('开始检查认证状态...');
 
       // 尝试进行API调用，检查是否需要认证
-      const result = await api.checkAuthStatus();
-      console.log('认证检查结果:', result);
+      try {
+        const result = await api.checkAuthStatus();
+        console.log('认证检查结果:', result);
 
-      if (!result) {
-        // 未认证，需要登录
-        console.log('未认证，设置需要登录状态');
-
-        // 如果有token但无效，清除它
-        if (api.isLoggedIn()) {
-          console.log('清除无效token');
-          api.logout();
+        if (result) {
+          // 已认证
+          setIsAuthenticated(true);
+        } else {
+          // 未认证
+          setIsAuthenticated(false);
         }
-
-        // 直接更新状态，确保先设置认证状态再结束检查
+      } catch (authError) {
+        // 认证检查失败，视为未认证
+        console.error('认证检查失败，视为未认证:', authError);
         setIsAuthenticated(false);
-        setIsAuthRequired(true);
-      } else {
-        // 直接更新认证状态
-        setIsAuthenticated(true);
-        setIsAuthRequired(false);
-
-        // 如果已经登录或不需要认证，继续加载数据
-        console.log('已认证，开始加载数据');
-        await fetchData();
-        await fetchConfigs();
       }
+
+      // 无论是否认证，都加载数据
+      console.log('加载数据...');
+      await fetchData();
+      await fetchConfigs();
     } catch (error) {
-      console.error('认证检查失败:', error);
-      // 如果返回401，说明需要认证
-      if (error instanceof Error && error.message.includes('认证')) {
-        console.log('检测到认证错误，设置需要登录状态');
-        setIsAuthenticated(false);
-        setIsAuthRequired(true);
-      }
+      console.error('检查认证状态时发生错误:', error);
     } finally {
       console.log('认证检查完成');
       setIsAuthChecking(false);
@@ -432,6 +431,10 @@ function App() {
 
   // 更新站点
   const handleSiteUpdate = async (updatedSite: Site) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       if (updatedSite.id) {
         await api.updateSite(updatedSite.id, updatedSite);
@@ -445,6 +448,10 @@ function App() {
 
   // 删除站点
   const handleSiteDelete = async (siteId: number) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       await api.deleteSite(siteId);
       await fetchData(); // 重新加载数据
@@ -456,6 +463,10 @@ function App() {
 
   // 保存分组排序
   const handleSaveGroupOrder = async () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       console.log('保存分组顺序', groups);
       // 构造需要更新的分组顺序数据
@@ -485,6 +496,10 @@ function App() {
 
   // 保存站点排序
   const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       console.log('保存站点排序', groupId, sites);
 
@@ -515,6 +530,10 @@ function App() {
 
   // 启动分组排序
   const startGroupSort = () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     console.log('开始分组排序');
     setSortMode(SortMode.GroupSort);
     setCurrentSortingGroupId(null);
@@ -522,6 +541,10 @@ function App() {
 
   // 启动站点排序
   const startSiteSort = (groupId: number) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     console.log('开始站点排序');
     setSortMode(SortMode.SiteSort);
     setCurrentSortingGroupId(groupId);
@@ -551,6 +574,10 @@ function App() {
 
   // 新增分组相关函数
   const handleOpenAddGroup = () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     setNewGroup({ name: '', order_num: groups.length });
     setOpenAddGroup(true);
   };
@@ -585,6 +612,10 @@ function App() {
 
   // 新增站点相关函数
   const handleOpenAddSite = (groupId: number) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     const group = groups.find((g) => g.id === groupId);
     const maxOrderNum = group?.sites.length
       ? Math.max(...group.sites.map((s) => s.order_num)) + 1
@@ -632,6 +663,10 @@ function App() {
 
   // 配置相关函数
   const handleOpenConfig = () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     setTempConfigs({ ...configs });
     setOpenConfig(true);
   };
@@ -648,6 +683,10 @@ function App() {
   };
 
   const handleSaveConfig = async () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       // 保存所有配置
       for (const [key, value] of Object.entries(tempConfigs)) {
@@ -713,6 +752,10 @@ function App() {
 
   // 处理导入对话框
   const handleOpenImport = () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     setImportFile(null);
     setImportError(null);
     setOpenImport(true);
@@ -733,6 +776,10 @@ function App() {
 
   // 处理导入数据
   const handleImportData = async () => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     if (!importFile) {
       handleError('请选择要导入的文件');
       return;
@@ -847,7 +894,9 @@ function App() {
     );
   }
 
-  // 如果需要认证但未认证，显示登录界面
+  // 登录状态不再阻止访问导航页，只在需要修改时检查
+  
+  // 如果用户主动点击登录，显示登录界面
   if (isAuthRequired && !isAuthenticated) {
     return (
       <ThemeProvider theme={theme}>
@@ -859,6 +908,10 @@ function App() {
 
   // 更新分组
   const handleGroupUpdate = async (updatedGroup: Group) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       if (updatedGroup.id) {
         await api.updateGroup(updatedGroup.id, updatedGroup);
@@ -872,6 +925,10 @@ function App() {
 
   // 删除分组
   const handleGroupDelete = async (groupId: number) => {
+    if (!isAuthenticated) {
+      handleError('请先登录以进行修改操作');
+      return;
+    }
     try {
       await api.deleteGroup(groupId);
       await fetchData(); // 重新加载数据
@@ -972,110 +1029,114 @@ function App() {
           </>
         )}
 
-        <Container
-          maxWidth='lg'
+        <Box
           sx={{
-            py: 4,
-            px: { xs: 2, sm: 3, md: 4 },
-            position: 'relative', // 使内容位于背景图片和蒙版之上
-            zIndex: 2,
+            width: '100%',
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            position: 'sticky',
+            top: 0,
+            zIndex: 4,
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 5,
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 2, sm: 0 },
-            }}
-          >
-            <Typography
-              variant='h3'
-              component='h1'
-              fontWeight='bold'
-              color='text.primary'
-              sx={{
-                fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' },
-                textAlign: { xs: 'center', sm: 'left' },
-              }}
-            >
-              {configs['site.name']}
-            </Typography>
-            <Stack
-              direction={{ xs: 'row', sm: 'row' }}
-              spacing={{ xs: 1, sm: 2 }}
-              alignItems='center'
-              width={{ xs: '100%', sm: 'auto' }}
-              justifyContent={{ xs: 'center', sm: 'flex-end' }}
-              flexWrap='wrap'
-              sx={{ gap: { xs: 1, sm: 2 }, py: { xs: 1, sm: 0 } }}
-            >
-              {sortMode !== SortMode.None ? (
-                <>
-                  {sortMode === SortMode.GroupSort && (
+          <Container maxWidth='lg'>
+            <Stack direction='row' spacing={2} alignItems='center'>
+              <Typography
+                variant='h6'
+                component='h1'
+                fontWeight='bold'
+                color='text.primary'
+              >
+                {configs['site.name']}
+              </Typography>
+              <Box sx={{ flex: 1, maxWidth: 600 }}>
+                <TextField
+                  fullWidth
+                  placeholder='搜索站点...'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position='start'>
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                  variant='outlined'
+                  size='small'
+                />
+              </Box>
+              <Stack
+                direction={{ xs: 'row', sm: 'row' }}
+                spacing={{ xs: 1, sm: 2 }}
+                alignItems='center'
+              >
+                {sortMode !== SortMode.None ? (
+                  <>
+                    {sortMode === SortMode.GroupSort && (
+                      <Button
+                        variant='contained'
+                        color='primary'
+                        startIcon={<SaveIcon />}
+                        onClick={handleSaveGroupOrder}
+                        size='small'
+                        sx={{
+                          minWidth: 'auto',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                      >
+                        保存分组顺序
+                      </Button>
+                    )}
                     <Button
-                      variant='contained'
-                      color='primary'
-                      startIcon={<SaveIcon />}
-                      onClick={handleSaveGroupOrder}
+                      variant='outlined'
+                      color='inherit'
+                      startIcon={<CancelIcon />}
+                      onClick={cancelSort}
                       size='small'
                       sx={{
                         minWidth: 'auto',
                         fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       }}
                     >
-                      保存分组顺序
+                      取消编辑
                     </Button>
-                  )}
-                  <Button
-                    variant='outlined'
-                    color='inherit'
-                    startIcon={<CancelIcon />}
-                    onClick={cancelSort}
-                    size='small'
-                    sx={{
-                      minWidth: 'auto',
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    }}
-                  >
-                    取消编辑
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant='contained'
-                    color='primary'
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenAddGroup}
-                    size='small'
-                    sx={{
-                      minWidth: 'auto',
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    }}
-                  >
-                    新增分组
-                  </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant='contained'
+                      color='primary'
+                      startIcon={<AddIcon />}
+                      onClick={handleOpenAddGroup}
+                      size='small'
+                      sx={{
+                        minWidth: 'auto',
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      }}
+                    >
+                      新增分组
+                    </Button>
 
-                  <Button
-                    variant='outlined'
-                    color='primary'
-                    startIcon={<MenuIcon />}
-                    onClick={handleMenuOpen}
-                    aria-controls={openMenu ? 'navigation-menu' : undefined}
-                    aria-haspopup='true'
-                    aria-expanded={openMenu ? 'true' : undefined}
-                    size='small'
-                    sx={{
-                      minWidth: 'auto',
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    }}
-                  >
-                    更多选项
-                  </Button>
-                  <Menu
+                    <Button
+                      variant='outlined'
+                      color='primary'
+                      startIcon={<MenuIcon />}
+                      onClick={handleMenuOpen}
+                      aria-controls={openMenu ? 'navigation-menu' : undefined}
+                      aria-haspopup='true'
+                      aria-expanded={openMenu ? 'true' : undefined}
+                      size='small'
+                      sx={{
+                        minWidth: 'auto',
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      }}
+                    >
+                      更多选项
+                    </Button>
+                    <Menu
                     id='navigation-menu'
                     anchorEl={menuAnchorEl}
                     open={openMenu}
@@ -1084,33 +1145,41 @@ function App() {
                       'aria-labelledby': 'navigation-button',
                     }}
                   >
-                    <MenuItem onClick={startGroupSort}>
-                      <ListItemIcon>
-                        <SortIcon fontSize='small' />
-                      </ListItemIcon>
-                      <ListItemText>编辑排序</ListItemText>
-                    </MenuItem>
-                    <MenuItem onClick={handleOpenConfig}>
-                      <ListItemIcon>
-                        <SettingsIcon fontSize='small' />
-                      </ListItemIcon>
-                      <ListItemText>网站设置</ListItemText>
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem onClick={handleExportData}>
-                      <ListItemIcon>
-                        <FileDownloadIcon fontSize='small' />
-                      </ListItemIcon>
-                      <ListItemText>导出数据</ListItemText>
-                    </MenuItem>
-                    <MenuItem onClick={handleOpenImport}>
-                      <ListItemIcon>
-                        <FileUploadIcon fontSize='small' />
-                      </ListItemIcon>
-                      <ListItemText>导入数据</ListItemText>
-                    </MenuItem>
+                    {!isAuthenticated && (
+                      <MenuItem onClick={() => setIsAuthRequired(true)}>
+                        <ListItemIcon>
+                          <SettingsIcon fontSize='small' />
+                        </ListItemIcon>
+                        <ListItemText>登录管理</ListItemText>
+                      </MenuItem>
+                    )}
                     {isAuthenticated && (
                       <>
+                        <MenuItem onClick={startGroupSort}>
+                          <ListItemIcon>
+                            <SortIcon fontSize='small' />
+                          </ListItemIcon>
+                          <ListItemText>编辑排序</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={handleOpenConfig}>
+                          <ListItemIcon>
+                            <SettingsIcon fontSize='small' />
+                          </ListItemIcon>
+                          <ListItemText>网站设置</ListItemText>
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={handleExportData}>
+                          <ListItemIcon>
+                            <FileDownloadIcon fontSize='small' />
+                          </ListItemIcon>
+                          <ListItemText>导出数据</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={handleOpenImport}>
+                          <ListItemIcon>
+                            <FileUploadIcon fontSize='small' />
+                          </ListItemIcon>
+                          <ListItemText>导入数据</ListItemText>
+                        </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                           <ListItemIcon sx={{ color: 'error.main' }}>
@@ -1121,11 +1190,60 @@ function App() {
                       </>
                     )}
                   </Menu>
-                </>
-              )}
-              <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
+                  </>
+                )}
+                <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
+              </Stack>
             </Stack>
+          </Container>
+        </Box>
+
+        <Container
+          maxWidth='lg'
+          sx={{
+            py: 4,
+            px: { xs: 2, sm: 3, md: 4 },
+            position: 'relative', // 使内容位于背景图片和蒙版之上
+            zIndex: 2,
+            display: 'flex',
+            flexDirection: 'row',
+          }}
+        >
+          {/* 左侧列表 */}
+          <Box
+            sx={{
+              width: { xs: 0, sm: 280 },
+              display: { xs: 'none', sm: 'block' },
+              mr: { sm: 4 },
+            }}
+          >
+            <Paper
+              sx={{
+                p: 2,
+                height: '100%',
+                position: 'sticky',
+                top: 100,
+                maxHeight: 'calc(100vh - 120px)',
+              }}
+            >
+              <Typography variant='h6' sx={{ mb: 2 }}>分组列表</Typography>
+              <List sx={{ p: 0 }}>
+                {groups.map((group) => (
+                  <ListItem key={group.id} disablePadding>
+                    <ListItemButton 
+                      onClick={() => setSelectedGroupId(group.id === selectedGroupId ? null : group.id)}
+                      selected={selectedGroupId === group.id}
+                    >
+                      <MuiListItemText primary={group.name} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
           </Box>
+
+          {/* 右侧内容 */}
+          <Box sx={{ flex: 1 }}>
 
           {loading && (
             <Box
@@ -1173,26 +1291,30 @@ function App() {
                 </DndContext>
               ) : (
                 <Stack spacing={5}>
-                  {groups.map((group) => (
-                    <GroupCard
-                      key={`group-${group.id}`}
-                      group={group}
-                      sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
-                      currentSortingGroupId={currentSortingGroupId}
-                      onUpdate={handleSiteUpdate}
-                      onDelete={handleSiteDelete}
-                      onSaveSiteOrder={handleSaveSiteOrder}
-                      onStartSiteSort={startSiteSort}
-                      onAddSite={handleOpenAddSite}
-                      onUpdateGroup={handleGroupUpdate}
-                      onDeleteGroup={handleGroupDelete}
-                      configs={configs}
-                    />
-                  ))}
+                  {groups
+                    .filter(group => selectedGroupId === null || group.id === selectedGroupId)
+                    .map((group) => (
+                      <GroupCard
+                        key={`group-${group.id}`}
+                        group={group}
+                        sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
+                        currentSortingGroupId={currentSortingGroupId}
+                        onUpdate={handleSiteUpdate}
+                        onDelete={handleSiteDelete}
+                        onSaveSiteOrder={handleSaveSiteOrder}
+                        onStartSiteSort={startSiteSort}
+                        onAddSite={handleOpenAddSite}
+                        onUpdateGroup={handleGroupUpdate}
+                        onDeleteGroup={handleGroupDelete}
+                        configs={configs}
+                      />
+                    ))}
                 </Stack>
               )}
             </Box>
           )}
+          </Box>
+        </Container>
 
           {/* 新增分组对话框 */}
           <Dialog
@@ -1606,40 +1728,7 @@ function App() {
             </DialogActions>
           </Dialog>
 
-          {/* GitHub角标 - 在移动端调整位置 */}
-          <Box
-            sx={{
-              position: 'fixed',
-              bottom: { xs: 8, sm: 16 },
-              right: { xs: 8, sm: 16 },
-              zIndex: 10,
-            }}
-          >
-            <Paper
-              component='a'
-              href='https://github.com/zqq-nuli/Navihive'
-              target='_blank'
-              rel='noopener noreferrer'
-              elevation={2}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                p: 1,
-                borderRadius: 10,
-                bgcolor: 'background.paper',
-                color: 'text.secondary',
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                  color: 'text.primary',
-                  boxShadow: 4,
-                },
-                textDecoration: 'none',
-              }}
-            >
-              <GitHubIcon />
-            </Paper>
-          </Box>
+
         </Container>
       </Box>
     </ThemeProvider>
