@@ -1120,76 +1120,78 @@ function App() {
                       新增分组
                     </Button>
 
-                    <Button
-                      variant='outlined'
-                      color='primary'
-                      startIcon={<MenuIcon />}
-                      onClick={handleMenuOpen}
-                      aria-controls={openMenu ? 'navigation-menu' : undefined}
-                      aria-haspopup='true'
-                      aria-expanded={openMenu ? 'true' : undefined}
-                      size='small'
-                      sx={{
-                        minWidth: 'auto',
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      }}
-                    >
-                      更多选项
-                    </Button>
-                    <Menu
-                    id='navigation-menu'
-                    anchorEl={menuAnchorEl}
-                    open={openMenu}
-                    onClose={handleMenuClose}
-                    MenuListProps={{
-                      'aria-labelledby': 'navigation-button',
-                    }}
-                  >
-                    {!isAuthenticated && (
-                      <MenuItem onClick={() => setIsAuthRequired(true)}>
-                        <ListItemIcon>
-                          <SettingsIcon fontSize='small' />
-                        </ListItemIcon>
-                        <ListItemText>登录管理</ListItemText>
-                      </MenuItem>
-                    )}
-                    {isAuthenticated && (
-                      <>
-                        <MenuItem onClick={startGroupSort}>
-                          <ListItemIcon>
-                            <SortIcon fontSize='small' />
-                          </ListItemIcon>
-                          <ListItemText>编辑排序</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={handleOpenConfig}>
-                          <ListItemIcon>
-                            <SettingsIcon fontSize='small' />
-                          </ListItemIcon>
-                          <ListItemText>网站设置</ListItemText>
-                        </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleExportData}>
-                          <ListItemIcon>
-                            <FileDownloadIcon fontSize='small' />
-                          </ListItemIcon>
-                          <ListItemText>导出数据</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={handleOpenImport}>
-                          <ListItemIcon>
-                            <FileUploadIcon fontSize='small' />
-                          </ListItemIcon>
-                          <ListItemText>导入数据</ListItemText>
-                        </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                          <ListItemIcon sx={{ color: 'error.main' }}>
-                            <LogoutIcon fontSize='small' />
-                          </ListItemIcon>
-                          <ListItemText>退出登录</ListItemText>
-                        </MenuItem>
-                      </>
-                    )}
-                  </Menu>
+                    <>
+                      <Button
+                        variant='outlined'
+                        color='primary'
+                        startIcon={<MenuIcon />}
+                        onClick={handleMenuOpen}
+                        aria-controls={openMenu ? 'navigation-menu' : undefined}
+                        aria-haspopup='true'
+                        aria-expanded={openMenu ? 'true' : undefined}
+                        size='small'
+                        sx={{
+                          minWidth: 'auto',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                      >
+                        更多选项
+                      </Button>
+                      <Menu
+                        id='navigation-menu'
+                        anchorEl={menuAnchorEl}
+                        open={openMenu}
+                        onClose={handleMenuClose}
+                        MenuListProps={{
+                          'aria-labelledby': 'navigation-button',
+                        }}
+                      >
+                        {!isAuthenticated && (
+                          <MenuItem onClick={() => setIsAuthRequired(true)}>
+                            <ListItemIcon>
+                              <SettingsIcon fontSize='small' />
+                            </ListItemIcon>
+                            <ListItemText>登录管理</ListItemText>
+                          </MenuItem>
+                        )}
+                        {isAuthenticated && (
+                          <>
+                            <MenuItem onClick={startGroupSort}>
+                              <ListItemIcon>
+                                <SortIcon fontSize='small' />
+                              </ListItemIcon>
+                              <ListItemText>编辑排序</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={handleOpenConfig}>
+                              <ListItemIcon>
+                                <SettingsIcon fontSize='small' />
+                              </ListItemIcon>
+                              <ListItemText>网站设置</ListItemText>
+                            </MenuItem>
+                            <Divider />
+                            <MenuItem onClick={handleExportData}>
+                              <ListItemIcon>
+                                <FileDownloadIcon fontSize='small' />
+                              </ListItemIcon>
+                              <ListItemText>导出数据</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={handleOpenImport}>
+                              <ListItemIcon>
+                                <FileUploadIcon fontSize='small' />
+                              </ListItemIcon>
+                              <ListItemText>导入数据</ListItemText>
+                            </MenuItem>
+                            <Divider />
+                            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                              <ListItemIcon sx={{ color: 'error.main' }}>
+                                <LogoutIcon fontSize='small' />
+                              </ListItemIcon>
+                              <ListItemText>退出登录</ListItemText>
+                            </MenuItem>
+                          </>
+                        )}
+                      </Menu>
+                    </>
                 )}
                 <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
               </Stack>
