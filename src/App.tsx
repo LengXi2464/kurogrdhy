@@ -1217,18 +1217,32 @@ function App() {
                 maxHeight: 'calc(100vh - 120px)',
               }}
             >
-              <Typography variant='h6' sx={{ mb: 2 }}>分组列表</Typography>
+              <Typography variant='h6' sx={{ mb: 2 }}>卡片列表</Typography>
               <List sx={{ p: 0 }}>
-                {groups.map((group) => (
-                  <ListItem key={group.id} disablePadding>
-                    <ListItemButton 
-                      onClick={() => setSelectedGroupId(group.id === selectedGroupId ? null : group.id)}
-                      selected={selectedGroupId === group.id}
-                    >
-                      <MuiListItemText primary={group.name} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                {groups.flatMap((group) => 
+                  group.sites.map((site) => (
+                    <ListItem key={site.id} disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          // 滚动到对应的卡片
+                          const element = document.getElementById(`site-${site.id}`);
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                      >
+                        <MuiListItemText 
+                          primary={site.name} 
+                          sx={{
+                            '& .MuiListItemText-primary': {
+                              fontSize: '0.875rem',
+                            },
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))
+                )}
               </List>
             </Paper>
           </Box>
@@ -1283,7 +1297,6 @@ function App() {
               ) : (
                 <Stack spacing={5}>
                   {groups
-                    .filter(group => selectedGroupId === null || group.id === selectedGroupId)
                     .map((group) => (
                       <GroupCard
                         key={`group-${group.id}`}

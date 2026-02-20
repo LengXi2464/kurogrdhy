@@ -89,6 +89,7 @@ const SiteCard = memo(function SiteCard({
   // 卡片内容
   const cardContent = (
     <Box
+      id={`site-${site.id}`}
       sx={{
         height: '100%',
         position: 'relative',
