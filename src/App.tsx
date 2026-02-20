@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
@@ -1218,30 +1218,81 @@ function App() {
             >
               <Typography variant='h6' sx={{ mb: 2 }}>卡片列表</Typography>
               <List sx={{ p: 0 }}>
-                {groups.flatMap((group) => 
-                  group.sites.map((site) => (
-                    <ListItem key={site.id} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          // 滚动到对应的卡片
-                          const element = document.getElementById(`site-${site.id}`);
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth' });
-                          }
-                        }}
-                      >
-                        <MuiListItemText 
-                          primary={site.name} 
+                {groups.map((group) => {
+                  const [isExpanded, setIsExpanded] = useState(false);
+                  return (
+                    <React.Fragment key={group.id}>
+                      <ListItem disablePadding>
+                        <ListItemButton
+                          onClick={() => setIsExpanded(!isExpanded)}
                           sx={{
-                            '& .MuiListItemText-primary': {
-                              fontSize: '0.875rem',
+                            '&:hover': {
+                              bgcolor: 'action.hover',
                             },
                           }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))
-                )}
+                        >
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              width: '100%',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                mr: 1,
+                                transition: 'transform 0.2s ease-in-out',
+                                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                              }}
+                            >
+                              ▶
+                            </Box>
+                            <MuiListItemText 
+                              primary={group.name} 
+                              secondary={`(${group.sites.length})`}
+                              sx={{
+                                '& .MuiListItemText-primary': {
+                                  fontSize: '0.875rem',
+                                  fontWeight: 500,
+                                },
+                                '& .MuiListItemText-secondary': {
+                                  fontSize: '0.75rem',
+                                },
+                              }}
+                            />
+                          </Box>
+                        </ListItemButton>
+                      </ListItem>
+                      {isExpanded && group.sites.map((site) => (
+                        <ListItem key={site.id} disablePadding sx={{ pl: 4 }}>
+                          <ListItemButton
+                            onClick={() => {
+                              // 滚动到对应的卡片
+                              const element = document.getElementById(`site-${site.id}`);
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
+                            sx={{
+                              '&:hover': {
+                                bgcolor: 'action.hover',
+                              },
+                            }}
+                          >
+                            <MuiListItemText 
+                              primary={site.name} 
+                              sx={{
+                                '& .MuiListItemText-primary': {
+                                  fontSize: '0.8rem',
+                                },
+                              }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
               </List>
             </Paper>
           </Box>
