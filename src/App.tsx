@@ -56,7 +56,6 @@ import {
   ListItem,
   ListItemButton,
   ListItemText as MuiListItemText,
-  Drawer,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -213,7 +212,6 @@ function App() {
   
   // 新增搜索和左侧列表状态
   const [searchTerm, setSearchTerm] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
   // 菜单打开关闭
