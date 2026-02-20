@@ -1727,9 +1727,6 @@ function App() {
               </Button>
             </DialogActions>
           </Dialog>
-
-
-        </Container>
       </Box>
     </ThemeProvider>
   );
